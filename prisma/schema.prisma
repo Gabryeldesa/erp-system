@@ -1,0 +1,249 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FINANCEIRO
+  RH
+  CONTABIL
+  JURIDICO
+  COMPRAS
+  VIEWER
+}
+
+model User {
+  id        String      @id @default(cuid())
+  name      String
+  email     String      @unique
+  password  String
+  role      Role        @default(VIEWER)
+  active    Boolean     @default(true)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  logs      AccessLog[]
+}
+
+model AccessLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  module    String
+  createdAt DateTime @default(now())
+}
+
+model Employee {
+  id          String       @id @default(cuid())
+  name        String
+  email       String       @unique
+  cpf         String       @unique
+  phone       String?
+  position    String
+  department  String
+  salary      Float
+  hireDate    DateTime
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  vacations   Vacation[]
+  evaluations Evaluation[]
+  timesheets  Timesheet[]
+}
+
+model Vacation {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  startDate  DateTime
+  endDate    DateTime
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+}
+
+model Evaluation {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  score      Float
+  comments   String?
+  period     String
+  createdAt  DateTime @default(now())
+}
+
+model Timesheet {
+  id         String    @id @default(cuid())
+  employeeId String
+  employee   Employee  @relation(fields: [employeeId], references: [id])
+  date       DateTime
+  checkIn    DateTime
+  checkOut   DateTime?
+  createdAt  DateTime  @default(now())
+}
+
+model AccountsPayable {
+  id          String    @id @default(cuid())
+  description String
+  amount      Float
+  dueDate     DateTime
+  paidAt      DateTime?
+  status      String    @default("PENDING")
+  category    String?
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AccountsReceivable {
+  id          String    @id @default(cuid())
+  description String
+  amount      Float
+  dueDate     DateTime
+  receivedAt  DateTime?
+  status      String    @default("PENDING")
+  category    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model FinancialTransaction {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  type        String
+  category    String?
+  date        DateTime
+  createdAt   DateTime @default(now())
+}
+
+model Contract {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  value       Float
+  startDate   DateTime
+  endDate     DateTime
+  status      String    @default("ACTIVE")
+  supplierId  String?
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Supplier {
+  id             String            @id @default(cuid())
+  name           String
+  cnpj           String            @unique
+  email          String?
+  phone          String?
+  address        String?
+  active         Boolean           @default(true)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  contracts      Contract[]
+  payables       AccountsPayable[]
+  purchaseOrders PurchaseOrder[]
+  invoices       Invoice[]
+}
+
+model Product {
+  id          String              @id @default(cuid())
+  name        String
+  description String?
+  sku         String              @unique
+  price       Float
+  unit        String              @default("UN")
+  active      Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  inventory   Inventory[]
+  orderItems  PurchaseOrderItem[]
+}
+
+model Inventory {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Float
+  type      String
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+model PurchaseOrder {
+  id         String              @id @default(cuid())
+  supplierId String
+  supplier   Supplier            @relation(fields: [supplierId], references: [id])
+  status     String              @default("PENDING")
+  total      Float
+  orderDate  DateTime            @default(now())
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  items      PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+  productId       String
+  product         Product       @relation(fields: [productId], references: [id])
+  quantity        Float
+  unitPrice       Float
+  total           Float
+}
+
+model Invoice {
+  id         String    @id @default(cuid())
+  number     String    @unique
+  type       String
+  issueDate  DateTime
+  value      Float
+  tax        Float     @default(0)
+  status     String    @default("ACTIVE")
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model LegalProcess {
+  id          String    @id @default(cuid())
+  title       String
+  number      String    @unique
+  type        String
+  status      String    @default("ACTIVE")
+  deadline    DateTime?
+  description String?
+  value       Float?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model AccountPlan {
+  id        String            @id @default(cuid())
+  code      String            @unique
+  name      String
+  type      String
+  parent    String?
+  active    Boolean           @default(true)
+  createdAt DateTime          @default(now())
+  entries   AccountingEntry[]
+}
+
+model AccountingEntry {
+  id            String      @id @default(cuid())
+  accountPlanId String
+  accountPlan   AccountPlan @relation(fields: [accountPlanId], references: [id])
+  description   String
+  debit         Float       @default(0)
+  credit        Float       @default(0)
+  date          DateTime
+  createdAt     DateTime    @default(now())
+}
