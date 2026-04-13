@@ -7,16 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  FINANCEIRO
-  RH
-  CONTABIL
-  JURIDICO
-  COMPRAS
-  VIEWER
-}
-
 model User {
   id        String      @id @default(cuid())
   name      String
@@ -32,10 +22,10 @@ model User {
 model AccessLog {
   id        String   @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
   action    String
   module    String
   createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model Employee {
@@ -51,39 +41,39 @@ model Employee {
   active      Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  vacations   Vacation[]
   evaluations Evaluation[]
   timesheets  Timesheet[]
+  vacations   Vacation[]
 }
 
 model Vacation {
   id         String   @id @default(cuid())
   employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id])
   startDate  DateTime
   endDate    DateTime
   status     String   @default("PENDING")
   createdAt  DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
 }
 
 model Evaluation {
   id         String   @id @default(cuid())
   employeeId String
-  employee   Employee @relation(fields: [employeeId], references: [id])
   score      Float
   comments   String?
   period     String
   createdAt  DateTime @default(now())
+  employee   Employee @relation(fields: [employeeId], references: [id])
 }
 
 model Timesheet {
   id         String    @id @default(cuid())
   employeeId String
-  employee   Employee  @relation(fields: [employeeId], references: [id])
   date       DateTime
   checkIn    DateTime
   checkOut   DateTime?
   createdAt  DateTime  @default(now())
+  employee   Employee  @relation(fields: [employeeId], references: [id])
 }
 
 model AccountsPayable {
@@ -95,9 +85,9 @@ model AccountsPayable {
   status      String    @default("PENDING")
   category    String?
   supplierId  String?
-  supplier    Supplier? @relation(fields: [supplierId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
 }
 
 model AccountsReceivable {
@@ -131,9 +121,9 @@ model Contract {
   endDate     DateTime
   status      String    @default("ACTIVE")
   supplierId  String?
-  supplier    Supplier? @relation(fields: [supplierId], references: [id])
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
 }
 
 model Supplier {
@@ -146,10 +136,10 @@ model Supplier {
   active         Boolean           @default(true)
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
-  contracts      Contract[]
   payables       AccountsPayable[]
-  purchaseOrders PurchaseOrder[]
+  contracts      Contract[]
   invoices       Invoice[]
+  purchaseOrders PurchaseOrder[]
 }
 
 model Product {
@@ -169,34 +159,34 @@ model Product {
 model Inventory {
   id        String   @id @default(cuid())
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
   quantity  Float
   type      String
   date      DateTime @default(now())
   createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
 }
 
 model PurchaseOrder {
   id         String              @id @default(cuid())
   supplierId String
-  supplier   Supplier            @relation(fields: [supplierId], references: [id])
   status     String              @default("PENDING")
   total      Float
   orderDate  DateTime            @default(now())
   createdAt  DateTime            @default(now())
   updatedAt  DateTime            @updatedAt
+  supplier   Supplier            @relation(fields: [supplierId], references: [id])
   items      PurchaseOrderItem[]
 }
 
 model PurchaseOrderItem {
   id              String        @id @default(cuid())
   purchaseOrderId String
-  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
   productId       String
-  product         Product       @relation(fields: [productId], references: [id])
   quantity        Float
   unitPrice       Float
   total           Float
+  product         Product       @relation(fields: [productId], references: [id])
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
 }
 
 model Invoice {
@@ -208,9 +198,9 @@ model Invoice {
   tax        Float     @default(0)
   status     String    @default("ACTIVE")
   supplierId String?
-  supplier   Supplier? @relation(fields: [supplierId], references: [id])
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
 }
 
 model LegalProcess {
@@ -240,10 +230,20 @@ model AccountPlan {
 model AccountingEntry {
   id            String      @id @default(cuid())
   accountPlanId String
-  accountPlan   AccountPlan @relation(fields: [accountPlanId], references: [id])
   description   String
   debit         Float       @default(0)
   credit        Float       @default(0)
   date          DateTime
   createdAt     DateTime    @default(now())
+  accountPlan   AccountPlan @relation(fields: [accountPlanId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  FINANCEIRO
+  RH
+  CONTABIL
+  JURIDICO
+  COMPRAS
+  VIEWER
 }
